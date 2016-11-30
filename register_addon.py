@@ -1,7 +1,6 @@
-import _db
-import _github
+import _local
+import _remote
 import argparse
-import requests
 import sqlite3
 import sys
 
@@ -12,13 +11,11 @@ parser.add_argument('--type', required=True, help='The type of Omeka addon',
                     choices=['s_module', 's_theme', 'classic_plugin', 'classic_theme'])
 args = parser.parse_args()
 
-try:
-    repo = _github.repo(args.owner, args.repo)
-except requests.exceptions.HTTPError:
+repo = _remote.gh().repository(args.owner, args.repo)
+if (not repo):
     sys.exit('GitHub repository not found')
 
-conn = sqlite3.connect('addons.db')
 try:
-    _db.insert_addon(args.owner, args.repo, args.type)
+    _local.db().insert_addon(args.owner, args.repo, args.type)
 except sqlite3.IntegrityError:
     sys.exit('GitHub repository already registered')

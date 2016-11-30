@@ -1,11 +1,10 @@
+import _local
 import logging
-import pprint;
-import sqlite3
+import pprint
 
 logging.basicConfig(filename='errors.log', format='%(asctime)s %(levelname)s: %(message)s')
-conn = sqlite3.connect('addons.db')
 
-for addon in conn.execute('SELECT * FROM addons'):
+for addon in _local.db().addons():
     pprint.pprint(addon)
 
 #~ for addon in addons:

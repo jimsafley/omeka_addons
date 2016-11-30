@@ -1,0 +1,3 @@
+*.pyc
+addons.db
+errors.log
