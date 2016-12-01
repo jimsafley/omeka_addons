@@ -1,18 +1,54 @@
+import ConfigParser
+import StringIO
 import sqlite3
-import pprint
 
 def db():
     return Db()
+
+def get_ini(zipfile, type, dirname):
+    ini_header = ''
+    if type == 'classic_plugin':
+        ini_path = '/plugin.ini'
+    elif type == 'classic_theme':
+        ini_path = '/theme.ini'
+    elif type == 's_module':
+        ini_header = '[info]\n'
+        ini_path = '/config/module.ini'
+    elif type == 's_theme':
+        ini_header = '[info]\n'
+        ini_path = '/config/theme.ini'
+
+    try:
+        ini = zipfile.read(dirname + ini_path)
+    except KeyError:
+        # INI file not found in archive
+        return False
+
+    # ConfigParser requires INI section headers.
+    ini_buffer = StringIO.StringIO(ini_header + ini)
+    parser = ConfigParser.ConfigParser()
+
+    try:
+        parser.readfp(ini_buffer)
+    except ConfigParser.ParsingError:
+        # INI formatted incorrectly (parsing error)
+        return False
+
+    try:
+        return parser.items('info')
+    except ConfigParser.NoSectionError:
+        # INI formatted incorrectly (no [info] section)
+        return False
 
 class Db:
 
     conn = sqlite3.connect('addons.db')
     conn.row_factory = sqlite3.Row
 
-    def insert_addon(self, owner, repo, type):
+    def insert_addon(self, owner, repo, type, dirname):
         with self.conn:
-            sql = 'INSERT INTO addons (github_owner, github_repo, type) VALUES (?, ?, ?)'
-            self.conn.execute(sql, (owner, repo, type))
+            sql = 'INSERT INTO addons (owner, repo, type, dirname) VALUES (?, ?, ?, ?)'
+            self.conn.execute(sql, (owner, repo, type, dirname))
 
     def addons(self):
         return self.conn.execute('SELECT * FROM addons')
@@ -22,10 +58,10 @@ class Db:
         SELECT *
         FROM addons
         JOIN releases ON addons.id = releases.addon_id
-        WHERE addons.github_owner = ?
-        AND addons.github_repo = ?
-        AND releases.github_asset_id = ?
-        AND releases.github_release_id = ?
+        WHERE addons.owner = ?
+        AND addons.repo = ?
+        AND releases.asset_id = ?
+        AND releases.release_id = ?
         """
         return self.conn.execute(sql, (owner, repo, release_id, asset_id)).fetchone()
 
@@ -34,19 +70,20 @@ class Db:
         c.executescript("""
         CREATE TABLE IF NOT EXISTS addons (
             id INTEGER PRIMARY KEY,
-            github_owner TEXT,
-            github_repo TEXT,
-            type TEXT
+            owner TEXT,
+            repo TEXT,
+            type TEXT,
+            dirname TEXT
         );
-
-        CREATE UNIQUE INDEX IF NOT EXISTS github_owner_repo
-        ON addons(github_owner, github_repo);
-
+        CREATE UNIQUE INDEX IF NOT EXISTS owner_repo
+        ON addons(owner, repo);
+        CREATE UNIQUE INDEX IF NOT EXISTS dirname_type
+        ON addons(dirname, type);
         CREATE TABLE IF NOT EXISTS releases (
             id INTEGER PRIMARY KEY,
             addon_id INTEGER,
-            github_release_id INTEGER,
-            github_asset_id INTEGER,
+            release_id INTEGER,
+            asset_id INTEGER,
             data TEXT,
             FOREIGN KEY(addon_id) REFERENCES addons(id)
         );
