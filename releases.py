@@ -1,29 +1,29 @@
 import _local
-import logging
+import _remote
 import pprint
+import requests
 
-logging.basicConfig(filename='errors.log', format='%(asctime)s %(levelname)s: %(message)s')
+db = _local.db()
+gh = _remote.gh()
 
-for addon in _local.db().addons():
-    pprint.pprint(addon)
-
-#~ for addon in addons:
-    #~ releases = api.releases(addon['github_owner'], addon['github_repo'])
-    #~ if releases is False:
-        #~ # Error thrown during API request. Do nothing.
-        #~ pass
-    #~ else:
-        #~ for release in releases:
-            #~ # Do not process draft releases, pre-releases, or releases without
-            #~ # at least one asset.
-            #~ if not release['prerelease'] and not release['draft'] and release['assets']:
-                #~ asset = release['assets'][0] # use first asset convention
-                #~ # We know about a release if the stored release/asset IDs and
-                #~ # the remote release/asset IDs match.
-                #~ if release['id'] in addon['releases'] and asset['id'] == addon['releases'][release['id']]['github_asset_id']:
-                    #~ # We know about this release.
-                    #~ pass
-                #~ else:
-                    #~ # We don't know about this release.
-                    #~ pass
-
+for addon in db.addons():
+    print 'Checking repository {}/{}:'.format(addon['github_owner'], addon['github_repo'])
+    try:
+        releases = gh.releases(addon['github_owner'], addon['github_repo'])
+    except requests.exceptions.HTTPError as e:
+        print '  Repository not available.'
+    except:
+        # Unexpected error
+        raise
+    else:
+        for release in releases:
+            print '  Checking release {}:'.format(release['id'])
+            if release['prerelease'] or release['draft'] or not release['assets']:
+                print '    Release does not meet criteria for registration.'
+            else:
+                print '    Release meets criteria for registration:'
+                asset = release.assets[0] # Use first asset convention
+                if db.release_is_registered(addon['github_owner'], addon['github_repo'], release['id'], asset['id']):
+                    print '      Release is already registered'
+                else:
+                    print '      Release is not registered'
