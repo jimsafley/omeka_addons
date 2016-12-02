@@ -16,17 +16,18 @@ class Db:
     def addons(self):
         return self.conn.execute('SELECT * FROM addons')
 
-    def release_is_registered(self, owner, repo, release_id, asset_id):
+    def releases(self):
+        return self.conn.execute('SELECT * FROM releases')
+
+    def release_is_registered(self, addon_id, release_id, asset_id):
         sql = """
         SELECT *
-        FROM addons
-        JOIN releases ON addons.id = releases.addon_id
-        WHERE addons.owner = ?
-        AND addons.repo = ?
-        AND releases.asset_id = ?
-        AND releases.release_id = ?
+        FROM releases
+        WHERE addon_id = ?
+        AND asset_id = ?
+        AND release_id = ?
         """
-        return self.conn.execute(sql, (owner, repo, release_id, asset_id)).fetchone()
+        return self.conn.execute(sql, (asset_id, release_id, asset_id)).fetchone()
 
     def create_db(self):
         c = self.conn.cursor()

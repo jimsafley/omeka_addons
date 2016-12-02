@@ -12,7 +12,7 @@ gh = _remote.gh()
 
 # @todo: Create a releases_to_remove list containing all registered releases
 # @todo: Create an empty releases_to_register list
-releases_to_remove = []
+releases_to_remove = [] # {addon_id: [release_id, release_id]}
 releases_to_register = []
 
 for addon in db.addons():
@@ -32,7 +32,7 @@ for addon in db.addons():
             else:
                 # Release meets criteria for registration
                 asset = release['assets'][0] # Use first asset convention
-                if db.release_is_registered(addon['owner'], addon['repo'], release['id'], asset['id']):
+                if db.release_is_registered(addon['id'], release['id'], asset['id']):
                     # Release is already registered
                     # @todo: Remove this release from the releases_to_remove list
                     pass
