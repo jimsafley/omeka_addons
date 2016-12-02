@@ -6,30 +6,23 @@ def db():
     return Db()
 
 def get_ini(zipfile, type, dirname):
-    ini_header = ''
-    if type == 'classic_plugin':
-        ini_path = '/plugin.ini'
-    elif type == 'classic_theme':
-        ini_path = '/theme.ini'
-    elif type == 's_module':
-        ini_header = '[info]\n'
-        ini_path = '/config/module.ini'
-    elif type == 's_theme':
-        ini_header = '[info]\n'
-        ini_path = '/config/theme.ini'
+
+    inipath_map = {
+        'classic_plugin': '/plugin.ini',
+        'classic_theme': '/theme.ini',
+        's_module': '/config/module.ini',
+        's_theme': '/config/theme.ini'
+    }
 
     try:
-        ini = zipfile.read(dirname + ini_path)
+        inifile = zipfile.open(dirname + inipath_map[type])
     except KeyError:
         # INI file not found in archive
         return False
 
-    # ConfigParser requires INI section headers.
-    ini_buffer = StringIO.StringIO(ini_header + ini)
-    parser = ConfigParser.ConfigParser()
-
     try:
-        parser.readfp(ini_buffer)
+        parser = ConfigParser.ConfigParser()
+        parser.readfp(inifile)
     except ConfigParser.ParsingError:
         # INI formatted incorrectly (parsing error)
         return False
