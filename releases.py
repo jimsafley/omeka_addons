@@ -1,5 +1,6 @@
 import _local
 import _remote
+import os
 import json
 import requests
 import zipfile
@@ -36,7 +37,7 @@ for addon in db.addons():
                     pass
                 else:
                     # Release is not registered; checking asset
-                    asset_filename = asset['name']
+                    asset_filename = 'tmp/' + asset['name']
                     asset_file = open(asset_filename, 'wb')
                     try:
                         response = requests.get(asset['browser_download_url'])
@@ -67,14 +68,14 @@ for addon in db.addons():
                                     pass
                                 else:
                                     # Everything checks out; register release
-                                    releases_to_register.append({
-                                        'addon_id': addon['id'],
-                                        'release_id': release['id'],
-                                        'asset_id': asset['id'],
-                                        'download_url': asset['browser_download_url'],
-                                        'ini': json.dumps(zip_ini)
-                                    })
+                                    releases_to_register.append((
+                                        addon['id'], release['id'], asset['id'],
+                                        asset['browser_download_url'], json.dumps(zip_ini)
+                                    ))
+                            asset_zipfile.close()
+                    os.remove(asset_filename)
 
+# @todo: delete all downloaded files
 # @todo: DELETE all releases in the releases_to_remove list
 # @todo: INSERT all releases in the the releases_to_register list
 # @todo: Build HTML files for each addon in database
