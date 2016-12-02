@@ -84,7 +84,8 @@ class Db:
             addon_id INTEGER,
             release_id INTEGER,
             asset_id INTEGER,
-            data TEXT,
+            download_url TEXT,
+            ini TEXT,
             FOREIGN KEY(addon_id) REFERENCES addons(id)
         );
         """)

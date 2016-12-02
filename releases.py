@@ -1,5 +1,6 @@
 import _local
 import _remote
+import json
 import requests
 import zipfile
 from pprint import pprint
@@ -7,8 +8,10 @@ from pprint import pprint
 db = _local.db()
 gh = _remote.gh()
 
-# @todo: Create a releases-to-be-removed list containing all registered releases
-# @todo: Create an empty releases-to-be-registered list
+# @todo: Create a releases_to_remove list containing all registered releases
+# @todo: Create an empty releases_to_register list
+releases_to_remove = []
+releases_to_register = []
 
 for addon in db.addons():
     # Checking repository
@@ -16,7 +19,7 @@ for addon in db.addons():
         releases = gh.releases(addon['owner'], addon['repo'])
     except requests.exceptions.RequestException as e:
         # Repository not available
-        # @todo: Remove all this repository's releases from the releases-to-be-removed list
+        # @todo: Remove all this repository's releases from the releases_to_remove list
         pass
     else:
         for release in releases:
@@ -29,7 +32,7 @@ for addon in db.addons():
                 asset = release['assets'][0] # Use first asset convention
                 if db.release_is_registered(addon['owner'], addon['repo'], release['id'], asset['id']):
                     # Release is already registered
-                    # @todo: Remove this release from the releases-to-be-removed list
+                    # @todo: Remove this release from the releases_to_remove list
                     pass
                 else:
                     # Release is not registered; checking asset
@@ -38,32 +41,41 @@ for addon in db.addons():
                     try:
                         response = requests.get(asset['browser_download_url'])
                     except requests.exceptions.RequestException:
-                        # Asset file not available; do nothing
+                        # Asset not available; do nothing
                         pass
                     else:
                         asset_file.write(response.content)
                         asset_file.close()
-                        # Asset file downloaded; checking ZIP
+                        # Asset downloaded; checking ZIP file
                         try:
                             asset_zipfile = zipfile.ZipFile(asset_filename, 'r')
                         except zipfile.BadZipfile:
-                            # Asset file is not a ZIP file; do nothing
+                            # Asset not a ZIP file; do nothing
                             pass
                         else:
-                            # Asset file is a ZIP file; checking structure
+                            # Asset is a ZIP file; checking ZIP file structure
                             zip_dirs = [name for name in asset_zipfile.namelist() if name == addon['dirname'] + '/']
                             if not zip_dirs:
-                                # Asset zip file does not contain one top-level
-                                # directory with the provided name; do nothing
+                                # The ZIP file must contain only one top-level
+                                # directory, and that directory must have the
+                                # provided name; do nothing
                                 pass
                             else:
                                 zip_ini = _local.get_ini(asset_zipfile, addon['type'], addon['dirname'])
-                                pprint(asset)
+                                if not zip_ini:
+                                    # INI file not found or formatted incorrectly; do nothing
+                                    pass
+                                else:
+                                    # Everything checks out; register release
+                                    releases_to_register.append({
+                                        'addon_id': addon['id'],
+                                        'release_id': release['id'],
+                                        'asset_id': asset['id'],
+                                        'download_url': asset['browser_download_url'],
+                                        'ini': json.dumps(zip_ini)
+                                    })
 
-                    # @todo: Download asset, checking that it's a valid addon for Omeka type
-                    # @todo: If not valid: do nothing
-                    # @todo: If valid: add this release to the releases-to-be-registered list
-
-# @todo: DELETE all releases in the releases-to-be-removed list
-# @todo: INSERT all releases in the the releases-to-be-registered list
+# @todo: DELETE all releases in the releases_to_remove list
+# @todo: INSERT all releases in the the releases_to_register list
 # @todo: Build HTML files for each addon in database
+pprint(releases_to_register)
