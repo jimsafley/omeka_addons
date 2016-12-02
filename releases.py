@@ -82,16 +82,22 @@ for addon in db.addons():
                                         pass
                                     else:
                                         try:
-                                            ini = parser.items('info')
+                                            ini = dict(parser.items('info'))
                                         except ConfigParser.NoSectionError:
                                             # INI formatted incorrectly (no [info] section); do nothing
                                             pass
                                         else:
-                                            # Everything checks out; register release
-                                            releases_to_register.append((
-                                                addon['id'], release['id'], asset['id'],
-                                                asset['browser_download_url'], json.dumps(ini)
-                                            ))
+                                            if 'version' not in ini:
+                                                # INI has no version; do nothing
+                                                pass
+                                            else:
+                                                # Everything checks out; register release
+                                                releases_to_register.append((
+                                                    addon['id'], release['id'], asset['id'],
+                                                    ini['version'].strip('"'),
+                                                    asset['browser_download_url'],
+                                                    json.dumps(ini)
+                                                ))
                         finally:
                             os.remove(asset_filename)
 

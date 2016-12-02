@@ -52,6 +52,8 @@ class Db:
             ini TEXT,
             FOREIGN KEY(addon_id) REFERENCES addons(id)
         );
+        CREATE UNIQUE INDEX IF NOT EXISTS addon_version
+        ON releases(addon_id, version);
         """)
 
 if __name__ == "__main__":
