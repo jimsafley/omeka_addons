@@ -1,37 +1,7 @@
-import ConfigParser
-import StringIO
 import sqlite3
 
 def db():
     return Db()
-
-def get_ini(zipfile, type, dirname):
-
-    inipath_map = {
-        'classic_plugin': '/plugin.ini',
-        'classic_theme': '/theme.ini',
-        's_module': '/config/module.ini',
-        's_theme': '/config/theme.ini'
-    }
-
-    try:
-        inifile = zipfile.open(dirname + inipath_map[type])
-    except KeyError:
-        # INI file not found in archive
-        return False
-
-    try:
-        parser = ConfigParser.ConfigParser()
-        parser.readfp(inifile)
-    except ConfigParser.ParsingError:
-        # INI formatted incorrectly (parsing error)
-        return False
-
-    try:
-        return parser.items('info')
-    except ConfigParser.NoSectionError:
-        # INI formatted incorrectly (no [info] section)
-        return False
 
 class Db:
 
@@ -77,6 +47,7 @@ class Db:
             addon_id INTEGER,
             release_id INTEGER,
             asset_id INTEGER,
+            version TEXT,
             download_url TEXT,
             ini TEXT,
             FOREIGN KEY(addon_id) REFERENCES addons(id)

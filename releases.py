@@ -1,5 +1,6 @@
 import _local
 import _remote
+import ConfigParser
 import os
 import json
 import requests
@@ -57,25 +58,43 @@ for addon in db.addons():
                             # Asset is a ZIP file; checking ZIP file structure
                             zip_dirs = [name for name in asset_zipfile.namelist() if name == addon['dirname'] + '/']
                             if not zip_dirs:
-                                # The ZIP file must contain only one top-level
-                                # directory, and that directory must have the
-                                # provided name; do nothing
+                                # The ZIP file must contain only one top-level directory, and that directory must have the provided name; do nothing
                                 pass
                             else:
-                                zip_ini = _local.get_ini(asset_zipfile, addon['type'], addon['dirname'])
-                                if not zip_ini:
-                                    # INI file not found or formatted incorrectly; do nothing
+                                inipath_map = {
+                                    'classic_plugin': '/plugin.ini',
+                                    'classic_theme': '/theme.ini',
+                                    's_module': '/config/module.ini',
+                                    's_theme': '/config/theme.ini'
+                                }
+                                try:
+                                    asset_inipath = addon['dirname'] + inipath_map[addon['type']]
+                                    asset_inifile = asset_zipfile.open(asset_inipath)
+                                except KeyError:
+                                    # INI file not found in archive; do nothing
                                     pass
                                 else:
-                                    # Everything checks out; register release
-                                    releases_to_register.append((
-                                        addon['id'], release['id'], asset['id'],
-                                        asset['browser_download_url'], json.dumps(zip_ini)
-                                    ))
-                            asset_zipfile.close()
-                    os.remove(asset_filename)
+                                    try:
+                                        parser = ConfigParser.ConfigParser()
+                                        parser.readfp(asset_inifile)
+                                    except ConfigParser.ParsingError:
+                                        # INI formatted incorrectly (parsing error); do nothing
+                                        pass
+                                    else:
+                                        try:
+                                            ini = parser.items('info')
+                                        except ConfigParser.NoSectionError:
+                                            # INI formatted incorrectly (no [info] section); do nothing
+                                            pass
+                                        else:
+                                            # Everything checks out; register release
+                                            releases_to_register.append((
+                                                addon['id'], release['id'], asset['id'],
+                                                asset['browser_download_url'], json.dumps(ini)
+                                            ))
+                        finally:
+                            os.remove(asset_filename)
 
-# @todo: delete all downloaded files
 # @todo: DELETE all releases in the releases_to_remove list
 # @todo: INSERT all releases in the the releases_to_register list
 # @todo: Build HTML files for each addon in database
