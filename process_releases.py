@@ -8,6 +8,12 @@ import zipfile
 
 gh = omekaaddons.GitHub()
 db = omekaaddons.Db()
+inipath_map = {
+    'classic_plugin': '/plugin.ini',
+    'classic_theme': '/theme.ini',
+    's_module': '/config/module.ini',
+    's_theme': '/config/theme.ini'
+}
 
 # @todo: Create a releases_to_remove list containing all registered releases
 # @todo: Create an empty releases_to_register list
@@ -60,12 +66,6 @@ for addon in db.addons():
                                 # The ZIP file must contain only one top-level directory, and that directory must have the provided name; do nothing
                                 pass
                             else:
-                                inipath_map = {
-                                    'classic_plugin': '/plugin.ini',
-                                    'classic_theme': '/theme.ini',
-                                    's_module': '/config/module.ini',
-                                    's_theme': '/config/theme.ini'
-                                }
                                 try:
                                     asset_inipath = addon['dirname'] + inipath_map[addon['type']]
                                     asset_inifile = asset_zipfile.open(asset_inipath)
