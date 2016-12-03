@@ -28,10 +28,19 @@ class Db:
     conn = sqlite3.connect('omekaaddons.db')
     conn.row_factory = sqlite3.Row
 
+    def __init__(self):
+        # Enable foreign key constraints. See https://www.sqlite.org/foreignkeys.html
+        self.conn.execute('PRAGMA foreign_keys = ON')
+
     def insert_addon(self, owner, repo, type, dirname):
         with self.conn:
             sql = 'INSERT INTO addons (owner, repo, type, dirname) VALUES (?, ?, ?, ?)'
             self.conn.execute(sql, (owner, repo, type, dirname))
+
+    def insert_release(self, addon_id, release_id, asset_id, version, download_url, ini):
+        with self.conn:
+            sql = 'INSERT INTO releases (addon_id, release_id, asset_id, version, download_url, ini) VALUES (?, ?, ?, ?, ?, ?)'
+            self.conn.execute(sql, (addon_id, release_id, asset_id, version, download_url, ini))
 
     def addons(self):
         return self.conn.execute('SELECT * FROM addons')
@@ -71,7 +80,7 @@ class Db:
             version TEXT,
             download_url TEXT,
             ini TEXT,
-            FOREIGN KEY(addon_id) REFERENCES addons(id)
+            FOREIGN KEY(addon_id) REFERENCES addons(id) ON DELETE CASCADE
         );
         CREATE UNIQUE INDEX IF NOT EXISTS addon_version
         ON releases(addon_id, version);

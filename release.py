@@ -3,8 +3,10 @@ import omekaaddons
 import sqlite3
 import sys
 
-def register():
-    pass
+def register(addon_id, release_id, asset_id, version, download_url, ini):
+    gh = omekaaddons.GitHub()
+    db = omekaaddons.Db()
+    db.insert_release(addon_id, release_id, asset_id, version, download_url, ini)
 
 if __name__ == '__main__':
     """Register an Omeka addon release."""
@@ -18,3 +20,7 @@ if __name__ == '__main__':
     parser.add_argument('--download_url', required=True, help='The GitHub asset download URL')
     parser.add_argument('--ini', required=True, help='The Omeka addon INI config for this release')
     args = parser.parse_args()
+
+    # @todo: get addon_id from owner and repo
+    #~ addon_id = 100 
+    register(addon_id, args.release_id, args.asset_id, args.version, args.download_url, args.ini)
