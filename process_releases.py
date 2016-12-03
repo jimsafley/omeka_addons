@@ -15,10 +15,6 @@ inipath_map = {
     's_theme': '/config/theme.ini'
 }
 
-for v in db.releases():
-    pprint(v)
-quit()
-
 # @todo: Create a releases_to_remove list containing all registered releases
 # @todo: Create an empty releases_to_register list
 releases_to_remove = [] # {addon_id: [release_id, release_id]}
