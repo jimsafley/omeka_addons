@@ -1,4 +1,3 @@
 *.pyc
 *.zip
-addons.db
-errors.log
+*.db

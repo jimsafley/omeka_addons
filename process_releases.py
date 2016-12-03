@@ -1,14 +1,13 @@
-import _local
-import _remote
 import ConfigParser
-import os
 import json
+import omekaaddons
+import os
+from pprint import pprint
 import requests
 import zipfile
-from pprint import pprint
 
-db = _local.db()
-gh = _remote.gh()
+gh = omekaaddons.GitHub()
+db = omekaaddons.Db()
 
 # @todo: Create a releases_to_remove list containing all registered releases
 # @todo: Create an empty releases_to_register list

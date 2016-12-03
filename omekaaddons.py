@@ -1,11 +1,31 @@
+import requests
+from requests.utils import quote
 import sqlite3
 
-def db():
-    return Db()
+class GitHub:
+    """Access the GitHub API"""
+
+    client_id = 'aad23add2728eddf4da3'
+    client_secret = '4f44af7870b0dc62bac752d82a1ca52547d360fd'
+
+    def _request(self, endpoint):
+        params = {'client_id': self.client_id, 'client_secret': self.client_secret}
+        response = requests.get('https://api.github.com' + endpoint, params=params)
+        response.raise_for_status()
+        return response.json()
+
+    def repo(self, owner, repo):
+        endpoint = '/repos/{}/{}'.format(quote(owner), quote(repo))
+        return self._request(endpoint)
+
+    def releases(self, owner, repo):
+        endpoint = '/repos/{}/{}/releases'.format(quote(owner), quote(repo))
+        return self._request(endpoint)
 
 class Db:
+    """Access the addons database"""
 
-    conn = sqlite3.connect('addons.db')
+    conn = sqlite3.connect('omekaaddons.db')
     conn.row_factory = sqlite3.Row
 
     def insert_addon(self, owner, repo, type, dirname):
@@ -56,6 +76,3 @@ class Db:
         CREATE UNIQUE INDEX IF NOT EXISTS addon_version
         ON releases(addon_id, version);
         """)
-
-if __name__ == "__main__":
-    db().create_db()
