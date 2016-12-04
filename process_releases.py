@@ -43,6 +43,10 @@ for addon in db.addons():
             continue
 
         # Release is not registered; checking asset
+        if not asset['name'].lower().endswith('.zip'):
+            # Asset does not have the .zip extension; do nothing
+            continue
+
         try:
             response = requests.get(asset['browser_download_url'])
         except requests.exceptions.RequestException:
@@ -97,7 +101,9 @@ for addon in db.addons():
             asset['browser_download_url'],
             json.dumps(ini)
         ))
-        os.remove(asset_filename)
+
+# Clean up.
+[os.remove('tmp/' + f) for f in os.listdir('tmp') if f.lower().endswith('.zip')]
 
 # @todo: DELETE all releases in the releases_to_remove list
 # @todo: INSERT all releases in the the releases_to_register list
