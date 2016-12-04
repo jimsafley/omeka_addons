@@ -5,6 +5,7 @@ import sqlite3
 class GitHub:
     """Access the GitHub API"""
 
+    # client_id and client_secret needed to raise GitHub rate limit.
     client_id = 'aad23add2728eddf4da3'
     client_secret = '4f44af7870b0dc62bac752d82a1ca52547d360fd'
 
