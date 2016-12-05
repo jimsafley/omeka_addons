@@ -38,10 +38,9 @@ for addon in db.addons():
     for release in releases:
         # Checking GitHub release
         if release['prerelease'] or release['draft'] or not release['assets']:
-            # Release does not meet criteria for registration; do nothing
+            # Release not valid; do nothing
             continue
 
-        # Release meets criteria for registration
         asset = release['assets'][0] # Use first asset convention
         if db.release_is_registered(addon['id'], release['id'], asset['id']):
             # Release is already registered; do not remove this release
@@ -114,12 +113,14 @@ for addon in db.addons():
 # Clean up.
 [os.remove('tmp/' + f) for f in os.listdir('tmp') if f.lower().endswith('.zip')]
 
-# Remove releases from the database.
+# Remove releases from the database. These are releases that have already been
+# registered but do not meet criteria for registration anymore.
 for addon_id, release_ids in releases_to_remove.iteritems():
     for release_id in release_ids:
         db.delete_release(addon_id, release_id)
 
-# Add releases to the database.
+# Add releases to the database. These are releases that have not already been
+# registered and meet criteria for registration.
 for r in releases_to_register:
     try:
         db.insert_release(r['addon_id'], r['release_id'], r['asset_id'],
