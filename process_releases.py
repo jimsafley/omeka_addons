@@ -4,7 +4,10 @@ import omekaaddons
 import os
 import requests
 import sqlite3
+import time
 import zipfile
+
+print time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + ' - Processing releases:'
 
 inipath_map = {
     'classic_plugin': '/plugin.ini',
@@ -36,25 +39,25 @@ for addon in db.addons():
         # The repository could have been deleted, made private, or temporarily
         # unavailable. Here we err on the side of it being unavailable and leave
         # the releases alone.
-        print '  Repository not available; moving on.'
+        print '  Repository not available.'
         del releases_to_remove[addon['id']]
         continue
 
     if not releases:
-        print '  Repository has no releases; moving on.'
+        print '  Repository has no releases.'
 
     for release in releases:
         # Checking GitHub release
         print '  Checking release {}:'.format(release['id'])
 
         if release['prerelease']:
-            print '    Release is prerelease; moving on.'
+            print '    Release is prerelease.'
             continue
         if release['draft']:
-            print '    Release is a draft; moving on.'
+            print '    Release is a draft.'
             continue
         if not release['assets']:
-            print '    Release has no asset; moving on.'
+            print '    Release has no asset.'
             continue
 
         asset = release['assets'][0] # Use first asset convention
@@ -69,14 +72,14 @@ for addon in db.addons():
         print '    Checking asset {}:'.format(asset['id'])
         if not asset['name'].lower().endswith('.zip'):
             # Asset does not have the .zip extension; do nothing
-            print '      Asset does not have .zip extension; moving on.'
+            print '      Asset does not have .zip extension.'
             continue
 
         try:
             response = requests.get(asset['browser_download_url'])
         except requests.exceptions.RequestException:
             # Asset not available; do nothing
-            print '      Asset not available; moving on.'
+            print '      Asset not available.'
             continue
 
         asset_filename = 'tmp/' + asset['name']
@@ -88,7 +91,7 @@ for addon in db.addons():
             asset_zipfile = zipfile.ZipFile(asset_filename, 'r')
         except zipfile.BadZipfile:
             # Asset not a ZIP file; do nothing
-            print '      Asset not a ZIP file; moving on.'
+            print '      Asset not a ZIP file.'
             continue
 
         # Asset is a ZIP file; checking ZIP file structure
@@ -96,7 +99,7 @@ for addon in db.addons():
         if not zip_dirs:
             # The ZIP file must contain only one top-level directory, and that
             # directory must have the provided name; do nothing
-            print '      Asset ZIP does not have valid top-level directory; moving on.'
+            print '      Asset ZIP does not have valid top-level directory.'
             continue
 
         try:
@@ -104,7 +107,7 @@ for addon in db.addons():
             asset_inifile = asset_zipfile.open(asset_inipath)
         except KeyError:
             # INI file not found in archive; do nothing
-            print '      INI file not found in ZIP; moving on.'
+            print '      INI file not found in ZIP.'
             continue
 
         try:
@@ -112,19 +115,19 @@ for addon in db.addons():
             parser.readfp(asset_inifile)
         except ConfigParser.ParsingError:
             # INI formatted incorrectly (parsing error); do nothing
-            print '      INI formatted incorrectly (parsing error); moving on.'
+            print '      INI formatted incorrectly (parsing error).'
             continue
 
         try:
             ini = dict(parser.items('info'))
         except ConfigParser.NoSectionError:
             # INI formatted incorrectly (no [info] section); do nothing
-            print '      INI formatted incorrectly (no [info] section); moving on.'
+            print '      INI formatted incorrectly (no [info] section).'
             continue
 
         if 'version' not in ini:
             # INI has no version; do nothing
-            print '      INI has no version; moving on.'
+            print '      INI has no version.'
             continue
 
         # Everything checks out; register release
