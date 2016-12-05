@@ -38,6 +38,11 @@ class Db:
             sql = 'INSERT INTO addons (owner, repo, type, dirname) VALUES (?, ?, ?, ?)'
             self.conn.execute(sql, (owner, repo, type, dirname))
 
+    def insert_addons(self, addons):
+        with self.conn:
+            sql = 'INSERT INTO addons (owner, repo, type, dirname) VALUES (?, ?, ?, ?)'
+            self.conn.executemany(sql, addons)
+
     def insert_release(self, addon_id, release_id, asset_id, version, download_url, ini):
         with self.conn:
             sql = 'INSERT INTO releases (addon_id, release_id, asset_id, version, download_url, ini) VALUES (?, ?, ?, ?, ?, ?)'

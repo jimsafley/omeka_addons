@@ -54,7 +54,7 @@ for addon in db.addons():
 
     for release in releases:
         # Checking GitHub release
-        print '  Checking release {}:'.format(release['id'])
+        print '  Checking release {} (tag={}):'.format(release['id'], release['tag_name'])
 
         if release['prerelease']:
             print '    Release is prerelease.'
@@ -70,7 +70,7 @@ for addon in db.addons():
         registered_release = db.release_is_registered(addon['id'], release['id'], asset['id'])
         if registered_release:
             # Release is already registered; do not remove this release
-            print '    Release v{} already registered.'.format(registered_release['version'])
+            print '    Release already registered (version={}).'.format(registered_release['version'])
             releases_to_remove[addon['id']].remove(release['id'])
             continue
 
@@ -138,7 +138,7 @@ for addon in db.addons():
 
         # Everything checks out; register release
         ini_version = ini['version'].strip('"')
-        print '    Release v{} is valid.'.format(ini_version)
+        print '    Release is valid (version={}).'.format(ini_version)
         releases_to_register.append((
             addon['id'],
             release['id'],
