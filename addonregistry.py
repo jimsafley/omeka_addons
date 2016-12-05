@@ -24,9 +24,9 @@ class GitHub:
         return self._request(endpoint)
 
 class Db:
-    """Access the addons database"""
+    """Access the addon registry database"""
 
-    conn = sqlite3.connect('omekaaddons.db')
+    conn = sqlite3.connect('addonregistry.db')
     conn.row_factory = sqlite3.Row
 
     def __init__(self):

@@ -1,10 +1,10 @@
 import argparse
-import omekaaddons
+import addonregistry
 import sqlite3
 import sys
 
 def register(addon_id, release_id, asset_id, version, download_url, ini):
-    db = omekaaddons.Db()
+    db = addonregistry.Db()
     db.insert_release(addon_id, release_id, asset_id, version, download_url, ini)
 
 if __name__ == '__main__':

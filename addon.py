@@ -1,12 +1,12 @@
 import argparse
-import omekaaddons
+import addonregistry
 import requests
 import sqlite3
 import sys
 
 def register(owner, repo, type, dirname):
-    gh = omekaaddons.GitHub()
-    db = omekaaddons.Db()
+    gh = addonregistry.GitHub()
+    db = addonregistry.Db()
     # Check that GitHub repository exists. Raises requests.exceptions.HTTPError if not.
     gh.repo(args.owner, args.repo)
     # Register Omeka addon. Raises sqlite3.IntegrityError if already registered.

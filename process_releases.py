@@ -1,6 +1,6 @@
 import ConfigParser
 import json
-import omekaaddons
+import addonregistry
 import os
 import requests
 import sqlite3
@@ -15,9 +15,15 @@ inipath_map = {
     's_module': '/config/module.ini',
     's_theme': '/config/theme.ini'
 }
+inisection_map = {
+    'classic_plugin': 'info',
+    'classic_theme': 'theme',
+    's_module': 'info',
+    's_theme': 'info'
+}
 
-gh = omekaaddons.GitHub()
-db = omekaaddons.Db()
+gh = addonregistry.GitHub()
+db = addonregistry.Db()
 releases_to_register = []
 releases_to_remove = {}
 
@@ -119,7 +125,7 @@ for addon in db.addons():
             continue
 
         try:
-            ini = dict(parser.items('info'))
+            ini = dict(parser.items(inisection_map[addon['type']]))
         except ConfigParser.NoSectionError:
             # INI formatted incorrectly (no [info] section); do nothing
             print '      INI formatted incorrectly (no [info] section).'
