@@ -101,14 +101,14 @@ for addon in db.addons():
             continue
 
         # Everything checks out; register release
-        releases_to_register.append({
-            'addon_id': addon['id'],
-            'release_id': release['id'],
-            'asset_id': asset['id'],
-            'version': ini['version'].strip('"'),
-            'download_url': asset['browser_download_url'],
-            'ini': json.dumps(ini)
-        })
+        releases_to_register.append((
+            addon['id'],
+            release['id'],
+            asset['id'],
+            ini['version'].strip('"'),
+            asset['browser_download_url'],
+            json.dumps(ini)
+        ))
 
 # Clean up.
 [os.remove('tmp/' + f) for f in os.listdir('tmp') if f.lower().endswith('.zip')]
@@ -121,10 +121,9 @@ for addon_id, release_ids in releases_to_remove.iteritems():
 
 # Add releases to the database. These are releases that have not already been
 # registered and meet criteria for registration.
-for r in releases_to_register:
+for release_to_register in releases_to_register:
     try:
-        db.insert_release(r['addon_id'], r['release_id'], r['asset_id'],
-                          r['version'], r['download_url'], r['ini'])
+        db.insert_release(*release_to_register)
     except sqlite3.IntegrityError:
         # Addon version already exists; do nothing. This could only happen if a
         # repository has two or more unregistered releases that have identical
