@@ -43,7 +43,7 @@ class Db:
             sql = 'INSERT INTO releases (addon_id, release_id, asset_id, version, download_url, ini) VALUES (?, ?, ?, ?, ?, ?)'
             self.conn.execute(sql, (addon_id, release_id, asset_id, version, download_url, ini))
 
-    def delete_release(addon_id, release_id):
+    def delete_release(self, addon_id, release_id):
         with self.conn:
             sql = 'DELETE FROM releases WHERE addon_id = ? AND release_id = ?'
             self.conn.execute(sql, (addon_id, release_id))

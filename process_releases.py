@@ -28,6 +28,7 @@ for r in db.releases():
 # registered releases.
 for addon in db.addons():
     # Checking GitHub repository
+    print 'Checking GitHub repository {}/{}:'.format(addon['owner'], addon['repo'])
     try:
         releases = gh.releases(addon['owner'], addon['repo'])
     except requests.exceptions.RequestException as e:
@@ -35,18 +36,24 @@ for addon in db.addons():
         # The repository could have been deleted, made private, or temporarily
         # unavailable. Here we err on the side of it being unavailable and leave
         # the releases alone.
+        print '  Repository not available.'
         del releases_to_remove[addon['id']]
         continue
 
     for release in releases:
+        print '  Checking release {}:'.format(release['id'])
+
         # Checking GitHub release
         if release['prerelease'] or release['draft'] or not release['assets']:
             # Release not valid; do nothing
+            print '    Release not valid.'
             continue
 
         asset = release['assets'][0] # Use first asset convention
-        if db.release_is_registered(addon['id'], release['id'], asset['id']):
+        registered_release = db.release_is_registered(addon['id'], release['id'], asset['id'])
+        if registered_release:
             # Release is already registered; do not remove this release
+            print '    Release v{} already registered.'.format(registered_release['version'])
             releases_to_remove[addon['id']].remove(release['id'])
             continue
 
@@ -104,11 +111,13 @@ for addon in db.addons():
             continue
 
         # Everything checks out; register release
+        ini_version = ini['version'].strip('"')
+        print '    Release v{} checks out.'.format(ini_version)
         releases_to_register.append((
             addon['id'],
             release['id'],
             asset['id'],
-            ini['version'].strip('"'),
+            ini_version,
             asset['browser_download_url'],
             json.dumps(ini)
         ))
