@@ -4,7 +4,6 @@ import sqlite3
 import sys
 
 def register(addon_id, release_id, asset_id, version, download_url, ini):
-    gh = omekaaddons.GitHub()
     db = omekaaddons.Db()
     db.insert_release(addon_id, release_id, asset_id, version, download_url, ini)
 
@@ -22,5 +21,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # @todo: get addon_id from owner and repo
-    #~ addon_id = 100 
-    register(addon_id, args.release_id, args.asset_id, args.version, args.download_url, args.ini)
+    #~ register(addon_id, args.release_id, args.asset_id, args.version, args.download_url, args.ini)

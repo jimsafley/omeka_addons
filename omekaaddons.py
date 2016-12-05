@@ -43,6 +43,11 @@ class Db:
             sql = 'INSERT INTO releases (addon_id, release_id, asset_id, version, download_url, ini) VALUES (?, ?, ?, ?, ?, ?)'
             self.conn.execute(sql, (addon_id, release_id, asset_id, version, download_url, ini))
 
+    def delete_release(addon_id, release_id):
+        with self.conn:
+            sql = 'DELETE FROM releases WHERE addon_id = ? AND release_id = ?'
+            self.conn.execute(sql, (addon_id, release_id))
+
     def addons(self):
         return self.conn.execute('SELECT * FROM addons')
 
@@ -50,14 +55,8 @@ class Db:
         return self.conn.execute('SELECT * FROM releases')
 
     def release_is_registered(self, addon_id, release_id, asset_id):
-        sql = """
-        SELECT *
-        FROM releases
-        WHERE addon_id = ?
-        AND asset_id = ?
-        AND release_id = ?
-        """
-        return self.conn.execute(sql, (asset_id, release_id, asset_id)).fetchone()
+        sql = 'SELECT * FROM releases WHERE addon_id = ? AND release_id = ? AND asset_id = ?'
+        return self.conn.execute(sql, (addon_id, release_id, asset_id)).fetchone()
 
     def create_db(self):
         c = self.conn.cursor()
@@ -83,6 +82,10 @@ class Db:
             ini TEXT,
             FOREIGN KEY(addon_id) REFERENCES addons(id) ON DELETE CASCADE
         );
+        CREATE UNIQUE INDEX IF NOT EXISTS addon_release
+        ON releases(addon_id, release_id);
+        CREATE UNIQUE INDEX IF NOT EXISTS release_asset
+        ON releases(release_id, asset_id);
         CREATE UNIQUE INDEX IF NOT EXISTS addon_version
         ON releases(addon_id, version);
         """)

@@ -2,12 +2,10 @@ import ConfigParser
 import json
 import omekaaddons
 import os
-from pprint import pprint
 import requests
+import sqlite3
 import zipfile
 
-gh = omekaaddons.GitHub()
-db = omekaaddons.Db()
 inipath_map = {
     'classic_plugin': '/plugin.ini',
     'classic_theme': '/theme.ini',
@@ -15,22 +13,30 @@ inipath_map = {
     's_theme': '/config/theme.ini'
 }
 
-# @todo: Create a releases_to_remove list containing all registered releases
-# @todo: Create an empty releases_to_register list
-releases_to_remove = [] # {addon_id: [release_id, release_id]}
+gh = omekaaddons.GitHub()
+db = omekaaddons.Db()
 releases_to_register = []
+releases_to_remove = {}
 
+# Set all registered releases to be removed from the database.
+for r in db.releases():
+    if r['addon_id'] not in releases_to_remove:
+        releases_to_remove[r['addon_id']] = []
+    releases_to_remove[r['addon_id']].append(r['release_id'])
+
+# Compare each registered addon's releases/assets on GitHub against its
+# registered releases.
 for addon in db.addons():
-    # Checking repository
+    # Checking GitHub repository
     try:
         releases = gh.releases(addon['owner'], addon['repo'])
     except requests.exceptions.RequestException as e:
-        # Repository not available
-        # @todo: Remove all this repository's releases from the releases_to_remove list
+        # Repository not available; do not remove this repository's releases
+        del releases_to_remove[addon['id']]
         continue
 
     for release in releases:
-        # Checking release
+        # Checking GitHub release
         if release['prerelease'] or release['draft'] or not release['assets']:
             # Release does not meet criteria for registration; do nothing
             continue
@@ -38,11 +44,11 @@ for addon in db.addons():
         # Release meets criteria for registration
         asset = release['assets'][0] # Use first asset convention
         if db.release_is_registered(addon['id'], release['id'], asset['id']):
-            # Release is already registered
-            # @todo: Remove this release from the releases_to_remove list
+            # Release is already registered; do not remove this release
+            releases_to_remove[addon['id']].remove(release['id'])
             continue
 
-        # Release is not registered; checking asset
+        # Release is not registered; checking GitHub asset
         if not asset['name'].lower().endswith('.zip'):
             # Asset does not have the .zip extension; do nothing
             continue
@@ -67,7 +73,8 @@ for addon in db.addons():
         # Asset is a ZIP file; checking ZIP file structure
         zip_dirs = [name for name in asset_zipfile.namelist() if name == addon['dirname'] + '/']
         if not zip_dirs:
-            # The ZIP file must contain only one top-level directory, and that directory must have the provided name; do nothing
+            # The ZIP file must contain only one top-level directory, and that
+            # directory must have the provided name; do nothing
             continue
 
         try:
@@ -95,17 +102,32 @@ for addon in db.addons():
             continue
 
         # Everything checks out; register release
-        releases_to_register.append((
-            addon['id'], release['id'], asset['id'],
-            ini['version'].strip('"'),
-            asset['browser_download_url'],
-            json.dumps(ini)
-        ))
+        releases_to_register.append({
+            'addon_id': addon['id'],
+            'release_id': release['id'],
+            'asset_id': asset['id'],
+            'version': ini['version'].strip('"'),
+            'download_url': asset['browser_download_url'],
+            'ini': json.dumps(ini)
+        })
 
 # Clean up.
 [os.remove('tmp/' + f) for f in os.listdir('tmp') if f.lower().endswith('.zip')]
 
-# @todo: DELETE all releases in the releases_to_remove list
-# @todo: INSERT all releases in the the releases_to_register list
+# Remove releases from the database.
+for addon_id, release_ids in releases_to_remove.iteritems():
+    for release_id in release_ids:
+        db.delete_release(addon_id, release_id)
+
+# Add releases to the database.
+for r in releases_to_register:
+    try:
+        db.insert_release(r['addon_id'], r['release_id'], r['asset_id'],
+                          r['version'], r['download_url'], r['ini'])
+    except sqlite3.IntegrityError:
+        # Addon version already exists; do nothing. This could only happen if a
+        # repository has two or more unregistered releases that have identical
+        # addon versions. This will only register the first, ignoring the rest.
+        pass
+
 # @todo: Build HTML files for each addon in database
-pprint(releases_to_register)
