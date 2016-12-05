@@ -66,7 +66,7 @@ for addon in db.addons():
             continue
 
         # Release is not registered; checking GitHub asset
-        print '    Checking asset {}'.format(asset['id'])
+        print '    Checking asset {}:'.format(asset['id'])
         if not asset['name'].lower().endswith('.zip'):
             # Asset does not have the .zip extension; do nothing
             print '      Asset does not have .zip extension; moving on.'
@@ -145,14 +145,14 @@ print 'Cleaning up.'
 
 # Remove releases from the database. These are releases that are currently
 # registered but do not meet criteria for registration anymore.
-print 'Removing releases.'
+print 'Removing invalid releases.'
 for addon_id, release_ids in releases_to_remove.iteritems():
     for release_id in release_ids:
         db.delete_release(addon_id, release_id)
 
 # Add releases to the database. These are releases that are not currently
 # registered and meet criteria for registration.
-print 'Adding releases.'
+print 'Registering valid releases.'
 for release_to_register in releases_to_register:
     try:
         db.insert_release(*release_to_register)
