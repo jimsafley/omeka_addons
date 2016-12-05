@@ -31,7 +31,10 @@ for addon in db.addons():
     try:
         releases = gh.releases(addon['owner'], addon['repo'])
     except requests.exceptions.RequestException as e:
-        # Repository not available; do not remove this repository's releases
+        # Repository not available; do not remove this repository's releases.
+        # The repository could have been deleted, made private, or temporarily
+        # unavailable. Here we err on the side of it being unavailable and leave
+        # the releases alone.
         del releases_to_remove[addon['id']]
         continue
 
@@ -113,13 +116,13 @@ for addon in db.addons():
 # Clean up.
 [os.remove('tmp/' + f) for f in os.listdir('tmp') if f.lower().endswith('.zip')]
 
-# Remove releases from the database. These are releases that have already been
+# Remove releases from the database. These are releases that are currently
 # registered but do not meet criteria for registration anymore.
 for addon_id, release_ids in releases_to_remove.iteritems():
     for release_id in release_ids:
         db.delete_release(addon_id, release_id)
 
-# Add releases to the database. These are releases that have not already been
+# Add releases to the database. These are releases that are not currently
 # registered and meet criteria for registration.
 for release_to_register in releases_to_register:
     try:
@@ -130,4 +133,4 @@ for release_to_register in releases_to_register:
         # addon versions. This will only register the first, ignoring the rest.
         pass
 
-# @todo: Build HTML files for each addon in database
+# @todo: Build HTML files for each registered addon
