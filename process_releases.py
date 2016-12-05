@@ -129,7 +129,7 @@ for addon in db.addons():
 
         # Everything checks out; register release
         ini_version = ini['version'].strip('"')
-        print '    Release v{} checks out.'.format(ini_version)
+        print '    Release v{} is valid.'.format(ini_version)
         releases_to_register.append((
             addon['id'],
             release['id'],
