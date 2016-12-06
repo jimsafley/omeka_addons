@@ -43,15 +43,15 @@ class Db:
             sql = 'INSERT INTO addons (owner, repo, type, dirname) VALUES (?, ?, ?, ?)'
             self.conn.executemany(sql, addons)
 
-    def insert_release(self, addon_id, release_id, asset_id, version, download_url, ini):
+    def insert_release(self, addon_id, asset_id, version, download_url, ini):
         with self.conn:
-            sql = 'INSERT INTO releases (addon_id, release_id, asset_id, version, download_url, ini) VALUES (?, ?, ?, ?, ?, ?)'
-            self.conn.execute(sql, (addon_id, release_id, asset_id, version, download_url, ini))
+            sql = 'INSERT INTO releases (addon_id, asset_id, version, download_url, ini) VALUES (?, ?, ?, ?, ?)'
+            self.conn.execute(sql, (addon_id, asset_id, version, download_url, ini))
 
-    def delete_release(self, addon_id, release_id):
+    def delete_release(self, addon_id, asset_id):
         with self.conn:
-            sql = 'DELETE FROM releases WHERE addon_id = ? AND release_id = ?'
-            self.conn.execute(sql, (addon_id, release_id))
+            sql = 'DELETE FROM releases WHERE addon_id = ? AND asset_id = ?'
+            self.conn.execute(sql, (addon_id, asset_id))
 
     def addons(self):
         return self.conn.execute('SELECT * FROM addons')
@@ -59,9 +59,9 @@ class Db:
     def releases(self):
         return self.conn.execute('SELECT * FROM releases')
 
-    def release_is_registered(self, addon_id, release_id, asset_id):
-        sql = 'SELECT * FROM releases WHERE addon_id = ? AND release_id = ? AND asset_id = ?'
-        return self.conn.execute(sql, (addon_id, release_id, asset_id)).fetchone()
+    def release_is_registered(self, addon_id, asset_id):
+        sql = 'SELECT * FROM releases WHERE addon_id = ? AND asset_id = ?'
+        return self.conn.execute(sql, (addon_id, asset_id)).fetchone()
 
     def create_db(self):
         c = self.conn.cursor()
@@ -73,24 +73,17 @@ class Db:
             type TEXT,
             dirname TEXT
         );
-        CREATE UNIQUE INDEX IF NOT EXISTS owner_repo
-        ON addons(owner, repo);
-        CREATE UNIQUE INDEX IF NOT EXISTS dirname_type
-        ON addons(dirname, type);
+        CREATE UNIQUE INDEX IF NOT EXISTS owner_repo ON addons(owner, repo);
+        CREATE UNIQUE INDEX IF NOT EXISTS type_dirname ON addons(type, dirname);
         CREATE TABLE IF NOT EXISTS releases (
             id INTEGER PRIMARY KEY,
             addon_id INTEGER,
-            release_id INTEGER,
             asset_id INTEGER,
             version TEXT,
             download_url TEXT,
             ini TEXT,
             FOREIGN KEY(addon_id) REFERENCES addons(id) ON DELETE CASCADE
         );
-        CREATE UNIQUE INDEX IF NOT EXISTS addon_release
-        ON releases(addon_id, release_id);
-        CREATE UNIQUE INDEX IF NOT EXISTS release_asset
-        ON releases(release_id, asset_id);
-        CREATE UNIQUE INDEX IF NOT EXISTS addon_version
-        ON releases(addon_id, version);
+        CREATE UNIQUE INDEX IF NOT EXISTS addon_version ON releases(addon_id, version);
+        CREATE UNIQUE INDEX IF NOT EXISTS asset ON releases(asset_id);
         """)

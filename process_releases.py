@@ -31,7 +31,7 @@ releases_to_remove = {}
 for r in db.releases():
     if r['addon_id'] not in releases_to_remove:
         releases_to_remove[r['addon_id']] = []
-    releases_to_remove[r['addon_id']].append(r['release_id'])
+    releases_to_remove[r['addon_id']].append(r['asset_id'])
 
 # Compare each registered addon's releases/assets on GitHub against its
 # registered releases.
@@ -54,7 +54,7 @@ for addon in db.addons():
 
     for release in releases:
         # Checking GitHub release
-        print '  Checking release {} (tag={}):'.format(release['id'], release['tag_name'])
+        print '  Checking release tag {}:'.format(release['tag_name'])
 
         if release['prerelease']:
             print '    Release is prerelease.'
@@ -67,11 +67,11 @@ for addon in db.addons():
             continue
 
         asset = release['assets'][0] # Use first asset convention
-        registered_release = db.release_is_registered(addon['id'], release['id'], asset['id'])
+        registered_release = db.release_is_registered(addon['id'], asset['id'])
         if registered_release:
             # Release is already registered; do not remove this release
             print '    Release already registered (version={}).'.format(registered_release['version'])
-            releases_to_remove[addon['id']].remove(release['id'])
+            releases_to_remove[addon['id']].remove(asset['id'])
             continue
 
         # Release is not registered; checking GitHub asset
@@ -140,12 +140,7 @@ for addon in db.addons():
         ini_version = ini['version'].strip('"')
         print '    Release is valid (version={}).'.format(ini_version)
         releases_to_register.append((
-            addon['id'],
-            release['id'],
-            asset['id'],
-            ini_version,
-            asset['browser_download_url'],
-            json.dumps(ini)
+            addon['id'], asset['id'], ini_version, asset['browser_download_url'], json.dumps(ini)
         ))
 
 # Clean up.
@@ -155,9 +150,9 @@ print 'Cleaning up.'
 # Remove releases from the database. These are releases that are currently
 # registered but do not meet criteria for registration anymore.
 print 'Removing invalid releases.'
-for addon_id, release_ids in releases_to_remove.iteritems():
-    for release_id in release_ids:
-        db.delete_release(addon_id, release_id)
+for addon_id, asset_ids in releases_to_remove.iteritems():
+    for asset_id in asset_ids:
+        db.delete_release(addon_id, asset_id)
 
 # Add releases to the database. These are releases that are not currently
 # registered and meet criteria for registration.
