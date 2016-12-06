@@ -28,10 +28,10 @@ releases_to_register = []
 releases_to_remove = {}
 
 # Set all registered releases to be removed from the database.
-for r in db.releases():
-    if r['addon_id'] not in releases_to_remove:
-        releases_to_remove[r['addon_id']] = []
-    releases_to_remove[r['addon_id']].append(r['asset_id'])
+for release_to_remove in db.releases():
+    if release_to_remove['addon_id'] not in releases_to_remove:
+        releases_to_remove[release_to_remove['addon_id']] = []
+    releases_to_remove[release_to_remove['addon_id']].append(release_to_remove['asset_id'])
 
 # Compare each registered addon's releases/assets on GitHub against its
 # registered releases.
@@ -56,17 +56,18 @@ for addon in db.addons():
         # Checking GitHub release
         print '  Checking release tag {}:'.format(release['tag_name'])
 
+        if release['draft']:
+            # Note that drafts aren't accessible without authorization.
+            print '    Release is a draft.'
+            continue
         if release['prerelease']:
             print '    Release is prerelease.'
-            continue
-        if release['draft']:
-            print '    Release is a draft.'
             continue
         if not release['assets']:
             print '    Release has no asset.'
             continue
 
-        asset = release['assets'][0] # Use first asset convention
+        asset = release['assets'][0] # Use first-asset convention
         registered_release = db.release_is_registered(addon['id'], asset['id'])
         if registered_release:
             # Release is already registered; do not remove this release
